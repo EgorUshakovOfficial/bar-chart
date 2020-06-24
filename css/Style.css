@@ -1,0 +1,15 @@
+﻿#title{
+    font-size: 3rem;
+    text-align: center;
+
+}
+
+.svg-container{
+    display: block;
+    margin: auto;
+    border: 3px solid black;
+}
+
+#tooltip{
+   stroke: black;
+}

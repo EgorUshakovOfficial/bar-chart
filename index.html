@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="description" content="This page showcases a barchart of GDP data" />
+    <meta name="keywords" content="barchart, d3 library, SVG, programming fcc" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--Bootstrap-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <!--CSS page-->
+    <link rel="stylesheet" type="text/css" href="./css/Style.css">
+    <!--D3 library-->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <!--AJAX Library-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!--jQuery-->
+    <script src="jquery-3.5.1.min.js"></script>
+    <title>Bar Chart</title>
+</head>
+<body>
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+    <div id="title">
+        United States GDP 
+    </div>
+    <script> 
+
+        let getYear = (time) => {
+            return time.slice(0, 4); 
+        }
+        // Get data from the given url
+        const url = 'https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json'; 
+        const req = new XMLHttpRequest(); 
+        req.open("GET", url, true); 
+        req.send();
+        req.onload = () => {
+            const json = JSON.parse(req.responseText);
+            const dataset  = json.data;
+            const timeData = dataset.map(item =>new Date(item[0]));
+            const gdpData = dataset.map(item => item[1]); 
+
+            // Create svg element
+            const height = 400; 
+            const width = 800; 
+            const barWidth = width / dataset.length;
+
+            // Create svg element
+            const svg = d3.select("body")
+                .append("svg")
+                .attr("width", (width + 100) + "px")
+                .attr("height", (height + 60) + "px")
+                .attr("class", "svg-container");
+
+            // Create tooltip
+            svg.append("ellipse")
+                .attr("id", "tooltip")
+                .attr("ry", 30 + "px")
+                .attr("rx", 100 + "px")
+                .attr("opacity", 0)
+                .attr("fill", "none")
+                .style("stroke", "black");
+
+            //Create text for tooltip 
+            svg.append("text")
+                .attr("id", "tooltip-text");
+            
+
+            let maxTime = d3.max(timeData);
+            maxTime.setMonth(maxTime.getMonth() + 3);
+
+            //Create a x-scale 
+            const xScale = d3.scaleTime()
+                .domain([d3.min(timeData), maxTime])
+                .range([0, width]);
+
+            //Create a y-scale for calculations 
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(gdpData)])
+                .range([0, height]);
+
+            //Create a y-scale for y-axis 
+            const yAxisScale = d3.scaleLinear()
+                .domain([0, d3.max(gdpData)])
+                .range([height, 0]);
+
+            // Create x-axis and y-axis 
+            xAxis = d3.axisBottom(xScale);
+            yAxis = d3.axisLeft(yAxisScale);
+            var gdpScaled = gdpData.map(item => {
+                return yScale(item);
+            })
+            //Display time data and GDP data 
+           
+            svg.selectAll('rect')
+                .data(gdpScaled)
+                .enter()
+                .append('rect')
+                .attr('data-date', (d, i) => {
+                    return dataset[i][0];
+                })
+                .attr('data-gdp', (d, i) => {
+                    return gdpData[i]
+                })
+                .attr('class', 'bar')
+                .attr('x', (d, i) => {
+                    return xScale(timeData[i])
+                })
+                .attr('y', (d, i) => {
+                    return height - d;
+                })
+                .attr('width', barWidth)
+                .attr('height', (d) => d)
+                .attr('transform', 'translate(60, 0)')
+                .attr("fill", "blue");
+
+            //Display x-axis
+            svg.append("g")
+                .attr("id", "x-axis")
+                .attr("transform", 'translate(60, 400)')
+                .call(xAxis);
+
+            //Display y-axis
+            svg.append("g")
+                .attr("id", "y-axis")
+                .attr("transform", 'translate(60, 0)')
+                .call(yAxis);
+
+            //Events 
+            $(".bar").mouseover(function () {
+                let getQuarterlyText = (dataEntry) => {
+                    let month = dataEntry.slice(5, 7);
+                    switch (month) {
+                        case "01":
+                            return dataEntry.slice(0, 4) + " Q1";
+                        case "04":
+                            return dataEntry.slice(0, 4) + " Q2";
+                        case "07":
+                            return dataEntry.slice(0, 4) + " Q3";
+                        case "10":
+                            return dataEntry.slice(0, 4) + " Q4";
+                    }
+                }
+
+
+
+                $(this).attr("fill", "white");
+                $("#tooltip").attr("opacity", 1)
+                    .attr("cx", $(this).attr("x") + 100)
+                    .attr("cy", $(this).attr("y") - 50)
+                    .attr("data-date", $(this).attr("data-date"));
+                let gdpText = "$" + $(this).attr("data-gdp") + " millions " + getQuarterlyText($(this).attr("data-date"));
+                $("#tooltip-text").text(gdpText)
+                    .attr("x", $(this).attr("x") - 80)
+                    .attr("y", $(this).attr("y") - 50);
+            })
+
+            $(".bar").mouseout(function () {
+                $(this).attr("fill", "blue"); 
+                $("#tooltip").attr("opacity", 0);
+                $("#tooltip-text").text("");
+            })
+
+            
+
+        };
+
+
+
+    </script>
+</body>
+</html>
